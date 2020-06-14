@@ -17,6 +17,7 @@ def scrape_all():
         "news_paragraph": news_p,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "mars_hemispheres": mars_hemi(browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -97,6 +98,44 @@ def mars_facts():
     df.set_index('description', inplace=True)
 
     return df.to_html()
+
+def mars_hemi(browser):
+    # Visit URL
+    url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url)
+
+    html = browser.html
+    hemi_soup = BeautifulSoup(html, 'html.parser')
+
+    #add try-except block for error handling
+    try:
+        # Find the relative image url
+        enhanced_imgs = [link.get('href') for link in hemi_soup.find_all('a', class_='itemLink product-item')]
+        enhanced_imgs_unique = pd.unique(enhanced_imgs)
+        img_list = enhanced_imgs_unique.tolist()
+
+        # Use the base URL to create an absolute URL
+        hemi_1 = f'https://astrogeology.usgs.gov{img_list[0]}'
+        hemi_2 = f'https://astrogeology.usgs.gov{img_list[1]}'
+        hemi_3 = f'https://astrogeology.usgs.gov{img_list[2]}'
+        hemi_4 = f'https://astrogeology.usgs.gov{img_list[3]}'
+
+        hemi_title_1 = hemi_soup.find_all('h3')[0].get_text()
+        hemi_title_2 = hemi_soup.find_all('h3')[1].get_text()
+        hemi_title_3 = hemi_soup.find_all('h3')[2].get_text()
+        hemi_title_4 = hemi_soup.find_all('h3')[3].get_text()
+
+        hemi_dict_1 = {'img_url': hemi_1,'title': hemi_title_1}
+        hemi_dict_2 = {'img_url': hemi_2,'title': hemi_title_2}
+        hemi_dict_3 = {'img_url': hemi_3,'title': hemi_title_3}
+        hemi_dict_4 = {'img_url': hemi_4,'title': hemi_title_4}
+        hemi_list = [hemi_dict_1, hemi_dict_2, hemi_dict_3, hemi_dict_4]
+
+    except AttributeError:
+        return None
+
+    return hemi_list
+
 
 if __name__ == "__main__":
     # If running as script, print scraped data
